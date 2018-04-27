@@ -1,0 +1,286 @@
+@charset "utf-8";
+/* CSS Document */
+
+*
+{
+    padding: 0;
+    margin: 1;
+    border: 1;
+}
+body {
+    color: #373C40;
+    font-family: "Arial Black", Gadget, sans-serif;
+    height: 100%;
+    background-color:white;
+    margin:10px;
+	font-size: 70%;
+}
+form.register{
+    width:950px;
+    margin: 0px auto 0px auto;
+    height:950px;
+    background-color:#CCC;
+    padding:10px;
+   /* -moz-border-radius:20px;
+    -webkit-border-radius:20px;*/
+}
+
+form p{
+    font-size:10pt;
+	clear:both;
+    margin: 0;
+    color:gray;
+    padding:5px;
+}
+form.register fieldset.row1
+{
+    width:778px;
+    padding:20px;
+    float:left;
+    margin-bottom:25px;
+}
+form.register fieldset.row1 legend
+{
+	font-size:18px;
+}
+
+form.register fieldset.row1 label{
+    width:140px;
+    float: left;
+    text-align: right;
+    margin-right:9px;
+    margin-top:1px;
+}
+
+form.register fieldset.row1.fullLabel label{
+    width:300px;
+    float: left;
+    text-align: right;
+    margin-right:9px;
+    margin-top:1px;
+}
+
+
+form.register legend {
+	
+   padding:8px;
+   margin-left: 20px;
+   font-weight:bold;
+   font-weight:97;	
+	display: block;
+	width: 100%;
+	margin-bottom: 50px;
+	font-size: 32px;
+	line-height: inherit;
+	color: #800080;
+	border: 0;
+	border-bottom: 2px solid #800080;
+}
+form.register label{
+    color:#800080;
+    width:98px;
+    float: left;
+    text-align: right;
+    margin-right:8px;
+    margin-top:4px;
+}
+form.register input{
+    width: 150px;
+    color: #505050;
+    float: left;
+    margin-right:18px;
+}
+form.register input[type=text]
+{
+    border: 1px solid #E1E1E1;
+	font-family:"Comic Sans MS", cursive;
+    height: 20px;
+}
+form.register select{
+    width: 150px;
+    color: #505050;
+    float: left;
+    margin-right:18px;
+}
+form.register select[type=text]
+{
+    border: 1px solid #E1E1E1;
+	font-family:"Comic Sans MS", cursive;
+    height: 20px;
+}
+form.register textarea{
+    width: 150px;
+    color: #505050;
+    float: left;
+    margin-right:18px;
+}
+
+.button
+{
+	/*#abda0f*/
+    background: #00BFFF;
+    padding: 2px 3px 2px;
+    color:white;
+	border-bottom-color:#00BFFF;
+    text-decoration: none;
+    /*
+   -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -moz-box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    -webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    text-shadow: 0 -1px 1px rgba(0,0,0,0.25);*/
+    cursor: pointer;
+    float:right;
+    font-size:20px;
+    margin:02px;
+	}
+
+form.registerLarge{
+    width:940px;
+    margin: 0px auto 0px auto;
+    height:700px;
+    background-color:#CCC;
+    padding:10px;
+   /* -moz-border-radius:20px;
+    -webkit-border-radius:20px;*/
+}
+
+form.registerLarge fieldset.row1
+{
+    width:778px;
+    padding:20px;
+    float:left;
+    margin-bottom:25px;
+}
+form.registerLarge fieldset.row1 legend
+{
+	font-size:18px;
+}
+
+form.registerLarge fieldset.row1 label{
+    width:140px;
+    float: left;
+    text-align: right;
+    margin-right:9px;
+    margin-top:1px;
+}
+
+
+
+form.registerLarge legend {
+	
+   padding:8px;
+   margin-left: 20px;
+   font-weight:bold;
+   font-weight:97;	
+	display: block;
+	width: 100%;
+	margin-bottom: 50px;
+	font-size: 32px;
+	line-height: inherit;
+	color: #800080;
+	border: 0;
+	border-bottom: 2px solid #800080;
+}
+form.registerLarge label{
+    color:#800080;
+    width:98px;
+    float: left;
+    text-align: right;
+    margin-right:8px;
+    margin-top:4px;
+}
+
+form.registerLarge tlabel{
+    color:#800080;
+    width:98px;
+    float: left;
+    text-align: center;
+    margin-right:8px;
+    margin-top:4px;
+}
+form.registerLarge input{
+    width: 130px;
+    color: #505050;
+    float: left;
+    margin-right:18px;
+}
+form.registerLarge input[type=text]
+{
+    border: 1px solid #E1E1E1;
+	font-family:"Comic Sans MS", cursive;
+    height: 20px;
+}
+form.registerLarge select{
+    width: 200px;
+    color: #505050;
+    float: left;
+    margin-right:18px;
+}
+form.registerLarge select[type=text]
+{
+    border: 1px solid #E1E1E1;
+	font-family:"Comic Sans MS", cursive;
+    height: 20px;
+}
+form.registerLarge textarea{
+    width: 150px;
+    color: #505050;
+    float: left;
+    margin-right:18px;
+}
+
+#login_area {
+    height: 362px;
+    width: 614px;
+    background: #fff url(../img/login_box.jpg) no-repeat;
+    margin: 0px auto;
+}
+
+#rounded-corner {
+	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	font-size: 14px;
+	width: 750px;
+	text-align: center;
+	border-collapse: collapse;
+	margin: 20px;
+	border: 2px solid black;
+}
+
+#rounded-corner th {
+	font-weight: normal;
+	font-size: 13px;
+	color: #039;
+	background: #b9c9fe;
+	padding: 8px;
+}
+
+tr.even {
+	font-weight: normal;
+	background: #8C7E6C;
+	color: #039;
+}
+
+tr.odd {
+	font-weight: normal;
+	background: #6D7B8D;
+	color: #039;
+}
+
+th {
+	background: #7D0552;
+}
+table td a strong
+{
+	color: green;
+}
+
+table td a samp
+
+{
+	color: red;
+}
+
+
+
+

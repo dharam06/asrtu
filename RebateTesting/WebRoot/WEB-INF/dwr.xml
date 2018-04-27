@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!DOCTYPE dwr PUBLIC "-//GetAhead Limited//DTD Direct Web Remoting 1.0//EN" "http://www.getahead.ltd.uk/dwr/dwr10.dtd">
+<dwr>
+	<allow>
+	<create creator="new" javascript="AjaxHelper">
+            <param name="class" value="com.astru.util.AjaxHelper"/>
+	   		 <include method="getGroupByItemDetails"/>
+	    	<include method="getItemNameId" />
+	     	<include method="getBankNameId" />
+	    	  <include method="getItemNameId" />
+	     	 <include method="getVendorNameId" />
+	     	 <include method="getVendorNameById" />
+	     	 <include method="getItemGroupByVendorID"/>
+	     	 <include method="getServiceTax" />
+	     	 <include method="getSubGroupByGroupID" />
+	     	 <include method="getItemBySubGroupID" />
+	     	 <include method="getTestChargeByItemID" />
+	     	 <include method="getNetAmountByStoDateID" />
+	     	  <include method="getSTUBystuID" />
+	     	  <include method="getRebatePercentByVenodorID" />
+	     	  <include method="getTestTransByVendorItem" />	    
+	     	  <include method="getGstnumberByVendorID" />	 	  
+        </create>
+     	
+	 
+	</allow>
+</dwr>

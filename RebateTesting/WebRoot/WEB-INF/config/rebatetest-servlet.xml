@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-3.0.xsd
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<context:property-placeholder location="classpath:resources/database.properties" />
+	<context:property-placeholder location="classpath:resources/log4j.properties" />
+	<context:component-scan base-package="com.asrtu" />
+
+	
+	<tx:annotation-driven proxy-target-class="true" transaction-manager="hibernateTransactionManager"/>
+	<!-- 
+	<bean id="viewResolver1" class="org.springframework.web.servlet.view.ResourceBundleViewResolver">
+  <property name="order" value="1" /> 
+  <property name="basename" value="views" /> 
+  </bean>
+ -->
+	<bean id="jspViewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
+		
+		<property name="prefix" value="/WEB-INF/views/" />
+		<property name="suffix" value=".jsp" />
+	</bean>
+
+<bean
+	  class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+	  <property name="exceptionMappings">
+		<props>
+			<prop key="com.asrtu.exception.CustomGenericException">generic_error</prop>
+			<prop key="java.lang.Exception">exception_error</prop>
+		</props>
+	  </property>
+	</bean>
+	
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="${database.driver}" />
+		<property name="url" value="${database.url}" />
+		<property name="username" value="${database.user}" />
+		<property name="password" value="${database.password}" />
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="annotatedClasses">
+			<list>
+				<value>com.asrtu.model.Login</value>
+				<value>com.asrtu.model.Stumaster</value>
+				<value>com.asrtu.model.Quarter</value>
+				<value>com.asrtu.model.RcPeriod</value>
+				<value>com.asrtu.model.StuTransaction</value>
+				<value>com.asrtu.model.VendorTrans</value>
+				<value>com.asrtu.model.RebateForm</value>
+				<value>com.asrtu.model.ItemGroup</value>
+				<value>com.asrtu.model.ItemMaster</value>
+				<value>com.asrtu.model.StoOrderForm</value>
+				<value>com.asrtu.model.Invoice</value>
+				<value>com.asrtu.model.TestingCharge</value>
+				<value>com.asrtu.model.Vendors</value>
+				<value>com.asrtu.model.BankMaster</value>
+				<value>com.asrtu.model.StuTransCol</value>
+				<value>com.asrtu.model.CirtBill</value>
+				<value>com.asrtu.model.DebitForm</value>
+				<value>com.asrtu.model.ItemPgTab</value>
+				<value>com.asrtu.model.RcTrc</value>
+				<value>com.asrtu.model.ProdSubGroup</value>
+				<value>com.asrtu.model.TaxEntry</value>
+				<value>com.asrtu.model.TestingTransaction</value>
+				<value>com.asrtu.model.FinanceYear</value>
+				<value>com.asrtu.model.VendorGst</value>
+		
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="hibernateTransactionManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+</beans>

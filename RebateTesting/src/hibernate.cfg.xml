@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE hibernate-configuration PUBLIC  
+          "-//Hibernate/Hibernate Configuration DTD 3.0//EN"  
+          "http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">  
+  
+<hibernate-configuration>  
+  
+    <session-factory>  
+        <property name="dialect">org.hibernate.dialect.Oracle9Dialect</property>  
+        <property name="connection.url">jdbc:oracle:thin:@61.247.230.168:1521:rc</property>  
+	      <property name="connection.username">hr</property>  
+        <property name="connection.password">hr</property>  
+        <property name="connection.driver_class">oracle.jdbc.driver.OracleDriver</property>  
+        <property name="show_sql">true</property>
+        <mapping class="com.asrtu.model.DBUser"></mapping>
+        <mapping class="com.asrtu.model.Invoice"></mapping>
+        <mapping class="com.asrtu.model.TestingTransaction"></mapping>
+         <mapping class="com.asrtu.model.StoOrderForm"></mapping>
+         <mapping class="com.asrtu.model.FinanceYear"></mapping>
+          <mapping class="com.asrtu.model.VendorGst"></mapping>
+         
+        
+    </session-factory>  
+  
+</hibernate-configuration>

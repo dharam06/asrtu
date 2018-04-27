@@ -1,0 +1,544 @@
+package com.asrtu.controller;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.asrtu.bean.BankMasterBean;
+
+import com.asrtu.bean.ItemPgTabBean;
+import com.asrtu.bean.RebateFormBean;
+import com.asrtu.bean.RebateInvoiceBean;
+import com.asrtu.bean.VendorTransBeanDetail;
+import com.asrtu.bean.VendorsBean;
+import com.asrtu.model.BankMaster;
+import com.asrtu.model.Invoice;
+import com.asrtu.model.ItemPgTab;
+import com.asrtu.model.RebateForm;
+import com.asrtu.model.Vendors;
+import com.asrtu.service.InvoiceService;
+import com.asrtu.service.RebateService;
+import com.astru.util.DropDownUtil;
+
+import sun.text.resources.FormatData;
+
+@Controller
+public class RebateFormController {
+
+	@Autowired
+	private RebateService rebateService;
+
+	@Autowired
+	private InvoiceService invoiceService;
+
+	@RequestMapping(value = "/saveRebate", method = RequestMethod.POST)
+	public ModelAndView saveRebate(@ModelAttribute("command") RebateFormBean rebateBean, BindingResult result)
+			throws Exception {
+		Map<String, Object> model = new HashMap<String, Object>();
+		String transactioNumberList = "";
+		String saveMessage="";
+		
+		if ("refreshPage".equals(rebateBean.getPageAction())) {
+			System.out.println("\n\n refreshPage rebateBean ");
+
+			List<Invoice> invoices = invoiceService.listInvoicesByVendorItem(rebateBean.getVendorCode(),
+					rebateBean.getItemCode());
+			model.put("rebateBean", prepareRebateInvoicesList(invoices, rebateBean));
+			model.put("vendors", prepareListVendorBean(rebateService.listVendors()));
+			model.put("items", prepareListItemPgBean(rebateService.getItemGroupByVendorID(rebateBean.getVendorCode())));
+			model.put("bankNames", prepareListBankBean(rebateService.listBankMaster()));
+			return new ModelAndView("rebateForm", model);
+		} else {
+			
+			//Interest on Rebate
+			RebateForm rebateIntOnRebate = prepareModelForNonInvoicePayment(rebateBean);
+			rebateIntOnRebate.setInterestOnRebate(rebateBean.getInterestOnRebate());
+			transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebateIntOnRebate).toString();
+
+			
+			//Interest on Service Tax
+			RebateForm rebateIntOnST = prepareModelForNonInvoicePayment(rebateBean);
+			rebateIntOnST.setInterestOnServiceTax(rebateBean.getInterestOnServiceTax());
+			transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebateIntOnST).toString();
+			
+			
+			//TDS Deducted
+			
+			RebateForm rebateTDS = prepareModelForNonInvoicePayment(rebateBean);
+			rebateTDS.setTdsAmount(rebateBean.getTdsAmount());
+			transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebateTDS).toString();
+
+			
+			//Incentive Adjusted
+			
+			RebateForm rebateIncAdj = prepareModelForNonInvoicePayment(rebateBean);
+			rebateIncAdj.setIncAmount(rebateBean.getIncAmount());
+			transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebateIncAdj).toString();
+
+			
+			//EMD Adjusted
+			
+			RebateForm rebateEMD = prepareModelForNonInvoicePayment(rebateBean);
+			rebateEMD.setEmdAmount(rebateBean.getEmdAmount());
+			transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebateEMD).toString();
+
+			
+			//Others/Bank Charge
+			
+			RebateForm rebateBankChanrge = prepareModelForNonInvoicePayment(rebateBean);
+			rebateBankChanrge.setBankcharge(rebateBean.getBankcharge());
+			transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebateBankChanrge).toString();
+
+
+			List<RebateInvoiceBean> rebateInvoiceBeanList = rebateBean.getInvoiceList();
+
+			for (RebateInvoiceBean rebateInvoiceBean : rebateInvoiceBeanList) {
+				if(null != rebateInvoiceBean.getInvoicePayment()){
+				if (rebateInvoiceBean.getInvoicePayment() > 0) {
+					RebateForm rebate = prepareModelForInvoicePayment(rebateBean, rebateInvoiceBean);
+					transactioNumberList = transactioNumberList + " : " +rebateService.addRebate(rebate).toString();
+					
+					// Update remainingOutStading for Invoice
+					Invoice invoice = new Invoice();
+					invoice.setInvoiceNumber(rebateInvoiceBean.getInvoiceNumber());
+					invoice.setRebateRemainingOutstanding(rebateInvoiceBean.getRebateRemainingOutstanding() - rebateInvoiceBean.getInvoicePayment());
+					invoiceService.updateInvoice(invoice);
+					
+					saveMessage = "Rebate Transaction is saved successfully for Transaction Number : "+transactioNumberList;
+					
+				}
+				}
+				
+			}
+			model.put("successMessage", saveMessage);
+			
+			model.put("vendors", prepareListVendorBean(rebateService.listVendors()));
+			model.put("bankNames", prepareListBankBean(rebateService.listBankMaster()));
+			
+			return new ModelAndView("rebateForm", model);
+		}
+	}
+
+	@RequestMapping(value = "/saveEditRebate", method = RequestMethod.POST)
+	public ModelAndView saveEditRebate(@ModelAttribute("command") RebateFormBean rebateBean, BindingResult result)
+			throws Exception {
+		Map<String, Object> model = new HashMap<String, Object>();
+		String transactioNumber = "";
+		String saveMessage="";
+		
+			
+
+	if(null != rebateBean.getInvoicePayment()){
+				if (rebateBean.getInvoicePayment() > 0) {
+					RebateForm rebate = prepareModelForEdit(rebateBean);
+					transactioNumber = rebateService.addRebate(rebate).toString();
+					saveMessage = "Rebate Transaction is saved successfully for Transaction Number : "+transactioNumber;
+					
+				}
+				
+			}
+			model.put("successMessage", saveMessage);
+			
+			model.put("vendors", prepareListVendorBean(rebateService.listVendors()));
+			model.put("bankNames", prepareListBankBean(rebateService.listBankMaster()));
+			
+			return new ModelAndView("rebateForm", model);
+		}
+
+
+	@RequestMapping(value = "/rebateform", method = RequestMethod.GET)
+	public ModelAndView rebateProcess() {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("vendors", prepareListVendorBean(rebateService.listVendors()));
+		model.put("bankNames", prepareListBankBean(rebateService.listBankMaster()));
+		return new ModelAndView("rebateForm", model);
+	}
+
+	@RequestMapping(value = "/viewRebate", method = RequestMethod.GET)
+	public ModelAndView listEmployees() {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("rebates", prepareListofBean(rebateService.listRebate()));
+		return new ModelAndView("viewRebate", model);
+	}
+
+	@RequestMapping(value = "/deleteRebate", method = RequestMethod.GET)
+	public ModelAndView DeleteRebate(@ModelAttribute("command") RebateFormBean rebateBean, BindingResult result)
+			throws Exception {
+		Map<String, Object> model = new HashMap<String, Object>();
+		RebateForm rebateForm = new RebateForm();
+		rebateForm.setReceiptNo(rebateBean.getReceiptNo());
+		rebateService.deleteRebate(rebateForm);
+		
+		model.put("rebates", prepareListofBean(rebateService.listRebate()));
+		return new ModelAndView("viewRebate", model);
+	}
+
+	@RequestMapping(value = "/editRebate", method = RequestMethod.GET)
+	public ModelAndView editRebate(@ModelAttribute("command") RebateFormBean rebateBean, BindingResult result) {
+		Map<String, Object> model = new HashMap<String, Object>();
+		System.out.println("Rebate Form Receipt No.- =======>  " + rebateBean.getReceiptNo());
+		model.put("vendors", prepareListVendorBean(rebateService.listVendors()));
+		model.put("items", prepareListItemPgBean(rebateService.listItemPg()));
+		model.put("bankNames", prepareListBankBean(rebateService.listBankMaster()));
+		model.put("rebate", prepareRebateBean(rebateService.getRebate(rebateBean.getReceiptNo())));
+		return new ModelAndView("editRebate", model);
+	}
+
+	private RebateFormBean prepareRebateBean(RebateForm reb) {
+		RebateFormBean bean = new RebateFormBean();
+
+		bean.setTransactionNo(reb.getTransactionNo());
+		bean.setAstruBankID(reb.getAstruBankID());
+		bean.setAstruBankName(reb.getAstruBankName());
+		bean.setBankcharge(reb.getBankcharge());
+		
+		bean.setChequeDate(reb.getChequeDate());
+		if(null != reb.getChequeDate()){
+			bean.setChequeDateString(formatDate(reb.getChequeDate()));
+		}
+		
+		bean.setChequeNo(reb.getChequeNo());
+		bean.setComments(reb.getComments());
+		bean.setDdChequeAmount(reb.getDdChequeAmount());
+		bean.setEmdAmount(reb.getEmdAmount());
+		bean.setIncAmount(reb.getIncAmount());
+		bean.setInterestOnRebate(reb.getInterestOnRebate());
+		bean.setInterestOnServiceTax(reb.getInterestOnServiceTax());
+		bean.setItemCode(reb.getItemCode());
+		bean.setItemName(reb.getItemName());
+		
+		bean.setQfdate(reb.getQfdate());
+		if(null != reb.getQfdate()){
+			bean.setQfdateString(formatDate(reb.getQfdate()));
+		}
+		
+		bean.setQtdate(reb.getQtdate());
+		if(null != reb.getQtdate()){
+			bean.setQtdateString(formatDate(reb.getQtdate()));
+		}
+		
+		bean.setReceiptDate(reb.getReceiptDate());
+		if(null != reb.getReceiptDate()){
+			bean.setReceiptDateString(formatDate(reb.getReceiptDate()));
+		}
+		
+		bean.setReceiptNo(reb.getReceiptNo());
+		bean.setRemarks(reb.getRemarks());
+		bean.setTdsAmount(reb.getTdsAmount());
+		
+		bean.setTransactionDate(reb.getTransactionDate());
+		if(null != reb.getTransactionDate()){
+			bean.setTransactionDateString(formatDate(reb.getTransactionDate()));
+		}
+		
+		bean.setInterestOnServiceTax(reb.getInterestOnServiceTax());
+		bean.setVendorCode(reb.getVendorCode());
+		bean.setVendorName(reb.getVendorName());
+		bean.setRebateOutstanding(reb.getRebateOutstanding());
+		bean.setInvoicePayment(reb.getInvoicePayment());
+
+		return bean;
+
+	}
+
+	private RebateForm prepareModel(RebateFormBean rebateBean, RebateInvoiceBean rebateInvoiceBean) throws Exception {
+		RebateForm rebate = new RebateForm();
+		rebate.setTransactionNo(rebateBean.getTransactionNo());
+		rebate.setTransactionDate(rebateBean.getTransactionDate());
+		rebate.setReceiptDate(rebateBean.getReceiptDate());
+
+		rebate.setVendorCode(rebateBean.getVendorCode());
+		rebate.setVendorName(new DropDownUtil().getVendorNameByVendiorId(rebateBean.getVendorCode()));
+		
+		rebate.setItemCode(rebateBean.getItemCode());
+		rebate.setItemName(new DropDownUtil().getItemNameByItemId(rebateBean.getItemCode()));
+		
+		rebate.setQfdate(rebateBean.getQfdate());
+		rebate.setQtdate(rebateBean.getQtdate());
+		rebate.setAstruBankID(rebateBean.getAstruBankID());
+		rebate.setAstruBankName(new DropDownUtil().getBankById(rebateBean.getAstruBankID()));
+		rebate.setChequeDate(rebateBean.getChequeDate());
+		rebate.setChequeNo(rebateBean.getChequeNo());
+		rebate.setDdChequeAmount(rebateBean.getDdChequeAmount());
+		rebate.setInterestOnRebate(rebateBean.getInterestOnRebate());
+		rebate.setInterestOnServiceTax(rebateBean.getInterestOnServiceTax());
+		rebate.setTdsAmount(rebateBean.getTdsAmount());
+		rebate.setIncAmount(rebateBean.getIncAmount());
+		rebate.setEmdAmount(rebateBean.getEmdAmount());
+		rebate.setBankcharge(rebateBean.getBankcharge());
+		rebate.setRemarks(rebateBean.getRemarks());
+		rebate.setComments(rebateBean.getComments());
+
+		rebate.setInvoiceNumber(rebateInvoiceBean.getInvoiceNumber());
+		rebate.setInvoicePayment(rebateInvoiceBean.getInvoicePayment());
+		rebate.setRebateOutstanding(rebateInvoiceBean.getRebateOutstanding());
+		
+		// interest on rebate for Invoice Payment
+		
+		Float interesOnRebateInvoice = 0f;
+		
+		Calendar invoiceDay = Calendar.getInstance();
+		invoiceDay.setTime(rebateBean.getReceiptDate());
+		invoiceDay.set(Calendar.DAY_OF_MONTH, invoiceDay.getActualMaximum(Calendar.DAY_OF_MONTH));
+		
+		Calendar qrtToDay = Calendar.getInstance();
+		if(null != rebateInvoiceBean.getQuarterToDate()){
+			qrtToDay.setTime(rebateInvoiceBean.getQuarterToDate());
+		}
+		
+		invoiceDay.set(Calendar.HOUR_OF_DAY, 0);
+		invoiceDay.set(Calendar.MINUTE, 0);
+		invoiceDay.set(Calendar.SECOND, 0);
+		invoiceDay.set(Calendar.MILLISECOND, 0);
+
+		qrtToDay.set(Calendar.HOUR_OF_DAY, 0);
+		qrtToDay.set(Calendar.MINUTE, 0);
+		qrtToDay.set(Calendar.SECOND, 0);
+		qrtToDay.set(Calendar.MILLISECOND, 0);
+		
+		long totalDaysForSt = TimeUnit.MILLISECONDS.toDays(
+	            Math.abs(invoiceDay.getTimeInMillis() - qrtToDay.getTimeInMillis()));
+
+		if(totalDaysForSt > 60) {
+				
+				totalDaysForSt = totalDaysForSt - 60;
+		} else{
+				totalDaysForSt = 0;
+		}
+		
+		if(null != rebateInvoiceBean.getInvoicePayment() && rebateInvoiceBean.getInvoicePayment() >0){
+			if(rebateInvoiceBean.getRebateType().equalsIgnoreCase("Regular Rebate")){
+				
+				interesOnRebateInvoice = rebateInvoiceBean.getInvoicePayment()*totalDaysForSt*12/36500;
+				
+			} else if (rebateInvoiceBean.getRebateType().equalsIgnoreCase("Rebate Reconciliation")){
+				
+				interesOnRebateInvoice = rebateInvoiceBean.getInvoicePayment()*totalDaysForSt*24/36500;
+			} else {
+				
+				System.out.println("\n\n ERROR No rebate Type for Invoice "+rebateInvoiceBean.getInvoiceNumber());
+			}
+			
+			
+			
+		}
+		rebate.setInterestOnRebateInvoice(interesOnRebateInvoice);
+		
+		return rebate;
+	}
+	
+	
+	private RebateForm prepareModelForEdit(RebateFormBean rebateBean) throws Exception {
+		RebateForm rebate = new RebateForm();
+		rebate.setReceiptNo(rebateBean.getReceiptNo());
+		rebate.setTransactionNo(rebateBean.getTransactionNo());
+		rebate.setTransactionDate(rebateBean.getTransactionDate());
+		rebate.setReceiptDate(rebateBean.getReceiptDate());
+
+		rebate.setVendorCode(rebateBean.getVendorCode());
+		rebate.setVendorName(new DropDownUtil().getVendorNameByVendiorId(rebateBean.getVendorCode()));
+		
+		rebate.setItemCode(rebateBean.getItemCode());
+		rebate.setItemName(new DropDownUtil().getItemNameByItemId(rebateBean.getItemCode()));
+		
+		rebate.setQfdate(rebateBean.getQfdate());
+		rebate.setQtdate(rebateBean.getQtdate());
+		rebate.setAstruBankID(rebateBean.getAstruBankID());
+		rebate.setAstruBankName(new DropDownUtil().getBankById(rebateBean.getAstruBankID()));
+		rebate.setChequeDate(rebateBean.getChequeDate());
+		rebate.setChequeNo(rebateBean.getChequeNo());
+		rebate.setDdChequeAmount(rebateBean.getDdChequeAmount());
+		rebate.setInterestOnRebate(rebateBean.getInterestOnRebate());
+		rebate.setInterestOnServiceTax(rebateBean.getInterestOnServiceTax());
+		rebate.setTdsAmount(rebateBean.getTdsAmount());
+		rebate.setIncAmount(rebateBean.getIncAmount());
+		rebate.setEmdAmount(rebateBean.getEmdAmount());
+		rebate.setBankcharge(rebateBean.getBankcharge());
+		rebate.setRemarks(rebateBean.getRemarks());
+		rebate.setComments(rebateBean.getComments());
+
+		return rebate;
+	}
+
+	
+	private List<RebateFormBean> prepareListofBean(List<RebateForm> rebateForm) {
+		List<RebateFormBean> beans = null;
+		System.out.print("List ====   " + rebateForm.size());
+		if (rebateForm != null && !rebateForm.isEmpty()) {
+			beans = new ArrayList<RebateFormBean>();
+			RebateFormBean bean = null;
+			for (RebateForm reb : rebateForm) {
+				bean = new RebateFormBean();
+				bean.setAstruBankID(reb.getAstruBankID());
+				bean.setAstruBankName(reb.getAstruBankName());
+				bean.setBankcharge(reb.getBankcharge());
+				
+				bean.setChequeDate(reb.getChequeDate());
+				if(null != reb.getChequeDate()){
+					bean.setChequeDateString(formatDate(reb.getChequeDate()));
+				}
+				
+				bean.setChequeNo(reb.getChequeNo());
+				bean.setComments(reb.getComments());
+				bean.setDdChequeAmount(reb.getDdChequeAmount());
+				bean.setEmdAmount(reb.getEmdAmount());
+				bean.setIncAmount(reb.getIncAmount());
+				bean.setInterestOnRebate(reb.getInterestOnRebate());
+				bean.setInterestOnServiceTax(reb.getInterestOnServiceTax());
+				bean.setItemCode(reb.getItemCode());
+				bean.setItemName(reb.getItemName());
+				
+				bean.setQfdate(reb.getQfdate());
+				if(null != reb.getQfdate()){
+					bean.setQfdateString(formatDate(reb.getQfdate()));
+				}
+				
+				bean.setQtdate(reb.getQtdate());
+				if(null != reb.getQtdate()){
+					bean.setQtdateString(formatDate(reb.getQtdate()));
+				}
+				
+				bean.setReceiptDate(reb.getReceiptDate());
+				if(null != reb.getReceiptDate()){
+					bean.setReceiptDateString(formatDate(reb.getReceiptDate()));
+				}
+				
+				bean.setReceiptNo(reb.getReceiptNo());
+				bean.setRemarks(reb.getRemarks());
+				bean.setTdsAmount(reb.getTdsAmount());
+				
+				bean.setTransactionDate(reb.getTransactionDate());
+				if(null != reb.getTransactionDate()){
+					bean.setTransactionDateString(formatDate(reb.getTransactionDate()));
+				}
+				
+				bean.setTransactionNo(reb.getTransactionNo());
+				bean.setInterestOnServiceTax(reb.getInterestOnServiceTax());
+				bean.setVendorCode(reb.getVendorCode());
+				bean.setVendorName(reb.getVendorName());
+				bean.setRebateOutstanding(reb.getRebateOutstanding());
+				bean.setInvoicePayment(reb.getInvoicePayment());
+				beans.add(bean);
+			}
+		}
+		return beans;
+	}
+
+	private List<ItemPgTabBean> prepareListItemPgBean(List<ItemPgTab> item) {
+		List<ItemPgTabBean> beans = null;
+		System.out.println("List of item Pg Table   " + item.size());
+		if (item != null && !item.isEmpty()) {
+			beans = new ArrayList<ItemPgTabBean>();
+			ItemPgTabBean bean = null;
+			for (ItemPgTab it : item) {
+				bean = new ItemPgTabBean();
+				bean.setItemCode(it.getItemCode());
+				bean.setItemName(it.getItemName());
+				beans.add(bean);
+			}
+
+		}
+
+		return beans;
+
+	}
+
+	private List<BankMasterBean> prepareListBankBean(List<BankMaster> bank) {
+		List<BankMasterBean> beans = null;
+		System.out.println("List of Bank   " + bank.size());
+		if (bank != null && !bank.isEmpty()) {
+			beans = new ArrayList<BankMasterBean>();
+			BankMasterBean bean = null;
+			for (BankMaster ban : bank) {
+				bean = new BankMasterBean();
+				bean.setBankCode(ban.getBankCode());
+				bean.setBankName(ban.getBankName());
+
+				beans.add(bean);
+			}
+
+		}
+
+		return beans;
+
+	}
+
+	private List<VendorsBean> prepareListVendorBean(List<Vendors> vendor) {
+		List<VendorsBean> beans = null;
+		System.out.println("List of Vendor   " + vendor.size());
+		if (vendor != null && !vendor.isEmpty()) {
+			beans = new ArrayList<VendorsBean>();
+			VendorsBean bean = null;
+			for (Vendors ven : vendor) {
+				bean = new VendorsBean();
+				bean.setVendorId(ven.getVendorId());
+				bean.setVendorName(ven.getVendorName());
+				beans.add(bean);
+			}
+
+		}
+
+		return beans;
+
+	}
+
+	/*
+	 * private List<VendorsBean>
+	 * prepareRebateBeanWithInvoices(List<RebateInvoiceBean> rebateInvoiceBean){
+	 * List<VendorsBean> beans=null; System.out.println("List of Vendor   "
+	 * +vendor.size()); if(vendor != null && !vendor.isEmpty() ){ beans=new
+	 * ArrayList<VendorsBean>(); VendorsBean bean = null; for(Vendors ven:
+	 * vendor){ bean=new VendorsBean(); bean.setVendorId(ven.getVendorId());
+	 * bean.setVendorName(ven.getVendorName()); beans.add(bean); }
+	 * 
+	 * }
+	 * 
+	 * return beans;
+	 * 
+	 * }
+	 */
+
+	private RebateFormBean prepareRebateInvoicesList(List<Invoice> invoices, RebateFormBean rebateBean) {
+
+		List<RebateInvoiceBean> rebateInvoiceBeanList = new ArrayList();
+		RebateInvoiceBean rebateInvoiceBean = null;
+		for (Invoice invoice : invoices) {
+
+			//rebateInvoiceBean = new RebateInvoiceBean(invoice.getInvoiceNumber(), invoice.getRebateOutstanding());
+			if(null !=invoice && null != invoice.getRebateRemainingOutstanding() ){
+				
+				if(invoice.getRebateRemainingOutstanding() > 0){
+					rebateInvoiceBean = new RebateInvoiceBean(invoice.getInvoiceNumber(), invoice.getRebateOutstanding(), invoice.getRebateRemainingOutstanding());
+					rebateInvoiceBean.setQuarter(invoice.getQuarter());
+					rebateInvoiceBean.setRebateType(invoice.getRebateType());
+					rebateInvoiceBeanList.add(rebateInvoiceBean);
+				}
+			}
+		}
+
+		rebateBean.setInvoiceList(rebateInvoiceBeanList);
+		return rebateBean;
+	}
+	
+	private String formatDate(Date date){
+		
+		 SimpleDateFormat sdf = new SimpleDateFormat("dd/M/yyyy");
+       String dateString = sdf.format(date);
+       System.out.println("=========="+dateString);
+  
+		return dateString;
+	}
+}
